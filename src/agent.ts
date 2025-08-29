@@ -4,7 +4,9 @@ import { launchBrowser, openPage } from "./tools/browserTools";
 import {
   takeScreenshot,
   changePage,
-  clickAtCoordinates,
+  fillInput,
+  queryElements,
+  clickElement,
   doubleClick,
   scrollTo,
   sendKeys,
@@ -13,18 +15,19 @@ import {
 export const websiteAutomationAgent = new Agent({
   name: "Browser Automation Agent",
   instructions: SYSTEM_PROMPT,
-  // model: "openai/gpt-4o",
-  model: 'gemini-2.5-flash',
-  modelSettings: { 
-    maxTokens: 8192,
-    temperature: 0.1
+  model: "gemini-2.5-flash-lite",
+  modelSettings: {
+    temperature: 0.1,
+    toolChoice: 'required'
   },
   tools: [
     launchBrowser,
     openPage,
     takeScreenshot,
     changePage,
-    clickAtCoordinates,
+    fillInput,
+    queryElements,
+    clickElement,
     doubleClick,
     scrollTo,
     sendKeys,

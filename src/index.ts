@@ -1,6 +1,5 @@
 import { run, setDefaultOpenAIClient, setOpenAIAPI, setTraceProcessors } from "@openai/agents";
 import { createOpenAIClient } from "./openai-provider";
-// import { createdeepseekClient } from "./deepseek-provider";
 import { websiteAutomationAgent } from "./agent";
 
 setTraceProcessors([])
@@ -17,13 +16,9 @@ if (!query) {
 (async () => {
   try {
     const result = await run(websiteAutomationAgent, query, {
-      stream: true,
+      maxTurns: 30,
     });
-    result
-      .toTextStream({
-        compatibleWithNodeStreams: true,
-      })
-      .pipe(process.stdout);
+    console.log("Final Result:", result.finalOutput);
   } catch (err) {
     console.error("Error running agent:", err);
   }

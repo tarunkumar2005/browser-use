@@ -14,6 +14,7 @@ export const takeScreenshot = tool({
     quality: z.number().default(80),
   }).strict(),
   async execute({ session_id, page_id, full_page, max_width, quality }) {
+    console.log("Taking screenshot of", { session_id, page_id, full_page, max_width, quality });
     const page = getPage(session_id, page_id);
     if (!page) return `error: unknown page ${page_id}`;
     
@@ -28,8 +29,68 @@ export const takeScreenshot = tool({
       .resize({ width: max_width, withoutEnlargement: true })
       .jpeg({ quality }) // Convert to JPEG for better compression
       .toBuffer();
+
+    console.log("Screenshot taken, size after compression:", compressedBuffer.length);
     
     return compressedBuffer.toString("base64")
+  },
+});
+
+export const queryElements = tool({
+  name: "Query Elements",
+  description: "Finds elements by CSS or text and returns attributes + bounding boxes.",
+  parameters: z.object({
+    session_id: z.string(),
+    page_id: z.string(),
+    selector: z.string().optional().nullable(),
+    text: z.string().optional().nullable(),
+  }),
+  async execute({ session_id, page_id, selector, text }) {
+    const page = getPage(session_id, page_id);
+    if (!page) return `error: unknown page ${page_id}`;
+
+    if (selector) {
+      const elements = await page.$$eval(selector, els =>
+        els.map(el => ({
+          tag: el.tagName,
+          text: (el as HTMLElement).innerText || '',
+          attrs: Array.from(el.attributes).map(a => ({ name: a.name, value: a.value })),
+          bbox: el.getBoundingClientRect(),
+        }))
+      );
+      return elements;
+    }
+
+    if (text) {
+      const elements = await page.$$eval("*", els =>
+        els.filter(el => (el as HTMLElement).innerText?.includes(text)).map(el => ({
+          tag: el.tagName,
+          text: (el as HTMLElement).innerText || '',
+          attrs: Array.from(el.attributes).map(a => ({ name: a.name, value: a.value })),
+          bbox: el.getBoundingClientRect(),
+        }))
+      );
+      return elements;
+    }
+
+    return "error: no selector or text provided";
+  },
+});
+
+export const fillInput = tool({
+  name: "Fill Input",
+  description: "Fill a form input identified by selector.",
+  parameters: z.object({
+    session_id: z.string(),
+    page_id: z.string(),
+    selector: z.string(),
+    value: z.string(),
+  }),
+  async execute({ session_id, page_id, selector, value }) {
+    const page = getPage(session_id, page_id);
+    if (!page) return `error: unknown page ${page_id}`;
+    await page.fill(selector, value);
+    return "ok";
   },
 });
 
@@ -50,20 +111,18 @@ export const changePage = tool({
   },
 });
 
-export const clickAtCoordinates = tool({
-  name: "Click At Coordinates",
-  description: "Clicks on specific x/y coordinates.",
+export const clickElement = tool({
+  name: "Click Element",
+  description: "Clicks an element using a CSS selector.",
   parameters: z.object({
     session_id: z.string(),
     page_id: z.string(),
-    x: z.number(),
-    y: z.number(),
-    button: z.enum(["left","right","middle"]).default("left"),
-  }).strict(),
-  async execute({ session_id, page_id, x, y, button }) {
+    selector: z.string(),
+  }),
+  async execute({ session_id, page_id, selector }) {
     const page = getPage(session_id, page_id);
     if (!page) return `error: unknown page ${page_id}`;
-    await page.mouse.click(x, y, { button });
+    await page.click(selector);
     return "ok";
   },
 });
@@ -96,7 +155,7 @@ export const scrollTo = tool({
   async execute({ session_id, page_id, y }) {
     const page = getPage(session_id, page_id);
     if (!page) return `error: unknown page ${page_id}`;
-    await page.mouse.wheel(0, y);
+    await page.evaluate((y) => window.scrollTo(0, y), y);
     return "ok";
   },
 });
