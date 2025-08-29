@@ -1,0 +1,19 @@
+{
+  "name": "browser-use",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/bun": "^1.2.21"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.1.0",
+    "dotenv": "^17.2.1",
+    "sharp": "^0.34.3",
+    "zod": "3",
+    "zustand": "^5.0.8"
+  }
+}
